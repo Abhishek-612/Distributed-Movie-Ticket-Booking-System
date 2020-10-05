@@ -1,4 +1,6 @@
 :load
+start cmd /k python database_server.py 
+
 start cmd /k python Cinemaserver.py 8000
 start cmd /k python Cinemaserver.py 8001
 start cmd /k python Cinemaserver.py 8002

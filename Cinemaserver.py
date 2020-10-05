@@ -5,6 +5,9 @@ import queue
 import threading
 from time import sleep
 import pika
+import pandas as pd
+import json
+import datetime
 
 
 # set as False to hide logs
@@ -49,18 +52,23 @@ class Request:
 
 def bookTicket(n,city):
     seconds = 5
-    if(seats[n-1]==0):
-        seats[n-1] = 1
-        print(seats)
+    seats = pd.DataFrame(json.loads(showAvailableSeats(city.lower())))
+    if not 0<n<=seats.shape[0]:
+        return {'status':f"Seat number {n} does not exist. Please retry with a valid seat number." , 'seats':seats.to_json(orient='records')}
+    elif(seats.Status[n-1]==0):
+        seats.Status[n-1] = 1
+        seats.Timestamp[n-1] = datetime.datetime.now()
+        print(seats.to_string(index=False))
+        database_proxy.update_database(seats.to_json(orient='records'),city.lower())
         for i in range(1, seconds + 1):
             sleep(1)
             print('work done: ' + str(int(100*(i/seconds))) + '%')
-        return "Congratulations! You have booked seat number "+ str(n) +" at " + str(cinemaName)+" , "+ str(city) , seats
+        return {'status':"Congratulations! You have booked seat number "+ str(n) +" at " + str(cinemaName)+", "+ str(city) , 'seats': seats.to_json(orient='records')}
     else:
-        return "Sorry the seat you selected has already been booked, select another seat." , seats
+        return {'status':"Sorry the seat you selected has already been booked, select another seat." , 'seats':seats.to_json(orient='records')}
 
-def showAvailableSeats():
-    return seats
+def showAvailableSeats(city):
+    return database_proxy.request_database(city.lower())
 
 # increment global variable clock
 def increment_clock():
@@ -96,22 +104,24 @@ def enter_critical_section(request,city):
     global seats
     received_permissions = 0
     # request = requests_get()
+    seats = showAvailableSeats(city.lower())
     temp = bookTicket(request["access_duration"],city)
-    return temp
+    return json.dumps(temp)
 
 def serverDetails(city):
-    return "\n**********************************************************\n\nWelcome to INOX Cinema,"+ str(city)+". Served by port "+ str(port)+"\n\n**********************************************************"
+    return f"\n{'*'*60}\n\nWelcome to INOX Cinema, "+ str(city)+". Served by port "+ str(port)+f"\n\n{'*'*60}"
 
 
 if __name__ == '__main__':
     cinemaName = "INOX Cinema"
-    seats = [0 for i in range(20)]
+    seats = None
+    database_proxy = xmlrpc.client.ServerProxy("http://localhost:9999")
 
     if sys.argv.__len__()>1:
         port = int(sys.argv[1])
 
     server = SimpleXMLRPCServer(("localhost", port),requestHandler=RequestHandler,allow_none=True)
-    print("Welcome to "+str(cinemaName) + " " + str(port) + "-" + str(os.getpid()))
+    print("Welcome to "+str(cinemaName) + " " + str(port) + " - " + str(os.getpid()))
     server.register_instance(node_id, "node_id")
     server.register_instance(clock, "clock")
     server.register_instance(seats,"seats")
