@@ -1,5 +1,5 @@
 from xmlrpc.server import SimpleXMLRPCServer
-import os
+import os,sys
 import shutil
 import pandas as pd
 import numpy as np
@@ -14,11 +14,17 @@ total_seats = 20
 def init_seats():
     file_create = True
 
-    if os.path.exists(seats_dir):
-        if input('\nFolder already exists!\nDo you want to recreate the folder and its content ? [y/n]: ') == 'y':
+    if sys.argv.__len__()>1:
+        if sys.argv[1] == 'y':
             shutil.rmtree(seats_dir)
         else:
             file_create = False
+    else:
+        if os.path.exists(seats_dir):
+            if input('\nFolder already exists!\nDo you want to recreate the folder and its content ? [y/n]: ') == 'y':
+                shutil.rmtree(seats_dir)
+            else:
+                file_create = False
     
     if file_create:
         os.mkdir(seats_dir)
