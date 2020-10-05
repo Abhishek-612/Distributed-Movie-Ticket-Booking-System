@@ -1,7 +1,7 @@
 from xmlrpc.server import SimpleXMLRPCServer,SimpleXMLRPCRequestHandler
 import xmlrpc.client
 import sys,os
-import queue, requests
+import queue
 import threading
 from time import sleep
 import pika
@@ -33,12 +33,12 @@ port = None
 class RequestHandler(SimpleXMLRPCRequestHandler):
     rpc_paths = ('/delhi','/mumbai','/bangalore')
 
+
 class Request:
-    def __init__(self, timestamp, queue_name, access_duration=None, city=None):
+    def __init__(self, timestamp, queue_name, access_duration=None):
         self.timestamp = timestamp
         self.owner_id = queue_name
         self.access_duration = access_duration
-        self.city = city
 
     def __repr__(self):
         return "(timestamp: %s, queue: %s, access_duration: %s)" % (self.timestamp, self.owner_id, self.access_duration)
@@ -48,15 +48,16 @@ class Request:
         return self.timestamp < other["timestamp"]
 
 def bookTicket(n,city):
-    seconds = 2
+    seconds = 5
     if(seats[n-1]==0):
         seats[n-1] = 1
+        print(seats)
         for i in range(1, seconds + 1):
             sleep(1)
             print('work done: ' + str(int(100*(i/seconds))) + '%')
-        return f"Congratulations! You have booked seat number {n} at {cinemaName}, {city} by Server port {port}"
+        return "Congratulations! You have booked seat number "+ str(n) +" at " + str(cinemaName)+" , "+ str(city) , seats
     else:
-        return "Sorry the seat you selected has already been booked, select another seat."
+        return "Sorry the seat you selected has already been booked, select another seat." , seats
 
 def showAvailableSeats():
     return seats
@@ -90,20 +91,16 @@ def requests_get():
         print(requests.queue)
     return req
 
-def enter_critical_section(request):
+def enter_critical_section(request,city):
     global received_permissions
     global seats
     received_permissions = 0
-    request = requests_get()
-    print(request)
-    temp = bookTicket(request["access_duration"])
-    # warn other nodes that the use of CS is over
-    # send_msg(MSG_RELEASE, node_id, True)
-    # process_next_request()
+    # request = requests_get()
+    temp = bookTicket(request["access_duration"],city)
     return temp
 
 def serverDetails(city):
-    return f"\n**********************************************************\n\nWelcome to INOX Cinema, {city}. Served by port {port}\n\n**********************************************************"
+    return "\n**********************************************************\n\nWelcome to INOX Cinema,"+ str(city)+". Served by port "+ str(port)+"\n\n**********************************************************"
 
 
 if __name__ == '__main__':
@@ -114,10 +111,10 @@ if __name__ == '__main__':
         port = int(sys.argv[1])
 
     server = SimpleXMLRPCServer(("localhost", port),requestHandler=RequestHandler,allow_none=True)
-    print("Welcome to "+cinemaName+f" {port} - {os.getpid()}")
-
+    print("Welcome to "+str(cinemaName) + " " + str(port) + "-" + str(os.getpid()))
     server.register_instance(node_id, "node_id")
     server.register_instance(clock, "clock")
+    server.register_instance(seats,"seats")
     server.register_instance(MSG_REQUEST, "MSG_REQUEST")
     server.register_function(enter_critical_section, "enter_critical_section")
     server.register_function(increment_clock, "increment_clock")

@@ -12,7 +12,7 @@ if sys.argv.__len__()>1:
 else:
     path = locs[int(input('\nChoose Location -\n1: Mumbai\n2: Delhi\n3: Bangalore\n\n->  '))]
 
-proxy = xmlrpc.client.ServerProxy(f"http://localhost/{path.lower()}")
+proxy = xmlrpc.client.ServerProxy("http://localhost/"+str(path.lower()))
 print(proxy.serverDetails(path))
 
 
@@ -33,9 +33,10 @@ def create_request(n,city):
     # increment timestamp before creating a request
     proxy.increment_clock()
     # push request to own queue
-    request = Request(proxy.clock, proxy.node_id, (n, city))
-    proxy.requests_put(request)
-    print(proxy.enter_critical_section(request))
+    request = Request(proxy.clock, proxy.node_id,n)
+    # proxy.requests_put(request)
+    status, seats = proxy.enter_critical_section(request,city)
+    print(status)
 
 
 while True:
@@ -50,7 +51,7 @@ while True:
         # print(msg)
     elif(choice==2):
         path = locs[int(input('\nChoose Location -\n1: Mumbai\n2: Delhi\n3: Bangalore\n\n->  '))]
-        proxy = xmlrpc.client.ServerProxy(f"http://localhost/{path}")
+        proxy = xmlrpc.client.ServerProxy("http://localhost/"+str(path))
         print(proxy.serverDetails(path))
     elif(choice==3):
         print('\nThank you!')
