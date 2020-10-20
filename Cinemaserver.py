@@ -8,6 +8,7 @@ import pika
 import pandas as pd
 import json
 import datetime
+import clockSync.berkeley as berkeley
 
 
 # set as False to hide logs
@@ -113,6 +114,7 @@ def serverDetails(city):
 
 
 if __name__ == '__main__':
+    berkeley.initiateClockServer()
     cinemaName = "INOX Cinema"
     seats = None
     database_proxy = xmlrpc.client.ServerProxy("http://localhost:9999")

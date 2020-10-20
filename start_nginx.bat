@@ -1,5 +1,5 @@
-cd C:\Users\Revadekar\Downloads\nginx-1.19.2\nginx-1.19.2
+cd D:\SUMMER TERM\DS\nginx-1.18.0
 TASKKILL /F /IM nginx.exe
 start nginx
 nginx -t
-cd ..\..\..\Desktop\DS
+cd D:\SUMMER TERM\DS\finalproj

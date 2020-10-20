@@ -2,6 +2,9 @@ import xmlrpc.client
 import sys
 import json
 import pandas as pd
+import clockSync.client as client 
+
+client.initiateSlaveClient()
 
 global path
 path = None
